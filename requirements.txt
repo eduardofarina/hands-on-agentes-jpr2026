@@ -1,0 +1,7 @@
+agno
+google-genai
+pypdf
+lancedb
+tantivy
+requests
+pillow
