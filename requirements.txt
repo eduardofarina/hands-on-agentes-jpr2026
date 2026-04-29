@@ -1,10 +1,7 @@
 agno
-groq
-sentence-transformers
+google-genai
+pypdf
 lancedb
 tantivy
-pypdf
-reportlab
 requests
 pillow
-matplotlib
