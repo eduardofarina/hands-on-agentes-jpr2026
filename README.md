@@ -17,21 +17,23 @@ Ao final da sessão, você será capaz de:
 
 ## 🚀 Como rodar
 
-1. **Antes da sessão** (5 minutos, faça em casa):
-   - Acesse <https://aistudio.google.com/apikey> com sua conta Google (mesma do Gmail).
-   - Clique em **Create API key** e copie a chave gerada.
-   - Guarde — vamos usar no dia.
+1. **Antes da sessão** (3 minutos, faça em casa):
+   - Acesse <https://console.groq.com/keys> e faça login (Google, GitHub ou e-mail).
+   - Clique em **Create API Key** → dê um nome qualquer → copie a chave (começa com `gsk_...`).
+   - Guarde — vamos usar no dia. Sem cartão de crédito.
 
 2. **No dia da sessão**:
    - Clique no botão **"Open in Colab"** acima.
    - No menu esquerdo do Colab, clique no ícone 🔑 (*Secrets*).
    - Adicione um secret com:
-     - **Nome**: `GOOGLE_API_KEY`
+     - **Nome**: `GROQ_API_KEY`
      - **Valor**: sua chave
      - Ative **Notebook access**.
    - Rode a célula de setup (a primeira com ▶️) e siga o notebook.
 
 > ⚠️ **Nunca cole sua API key diretamente no código.** Sempre use o sistema de Secrets do Colab. Se você compartilhar o notebook com a chave dentro, qualquer pessoa pode usá-la.
+
+> 🔄 **Plano B — Google Gemini:** se a Groq estiver fora do ar no dia, dá pra rodar o mesmo notebook trocando o provedor. Detalhes no apêndice B do próprio notebook.
 
 ## 📦 O que está neste repo
 
@@ -48,13 +50,16 @@ hands-on-agentes-jpr2026/
 ## 🧰 Stack utilizada
 
 - **[Agno](https://github.com/agno-agi/agno)** — framework minimalista para construir agentes
-- **Google Gemini** (via `google-genai`) — modelo de linguagem multimodal com free tier
+- **[Groq Cloud](https://console.groq.com)** — inferência rápida (LPU) de modelos open-weight, com free tier sem cartão
+  - **Llama 3.3 70B** (`llama-3.3-70b-versatile`) — texto e tool calling
+  - **Llama 4 Scout** (`meta-llama/llama-4-scout-17b-16e-instruct`) — multimodal (texto + imagem)
+- **[Sentence-Transformers](https://www.sbert.net/)** — embeddings multilíngues locais para o RAG (sem API key)
 - **Google Colab** — ambiente de execução gratuito, sem instalação local
 
 ## 📚 Pré-requisitos
 
 - **Zero**. Sério. Se você nunca abriu um Jupyter notebook, a primeira seção ensina como clicar no ▶️.
-- Conta Google (para o Colab e para obter a API key).
+- Conta Google (para o Colab) e uma conta na [Groq](https://console.groq.com) (Google/GitHub/e-mail, sem cartão).
 
 ## ⚕️ Aviso clínico
 
