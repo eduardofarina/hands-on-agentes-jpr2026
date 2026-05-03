@@ -17,7 +17,6 @@ Ao final da sessão, você será capaz de:
 
 ## 🚀 Como rodar
 
-AIzaSyBJalwi2o02kNYjCYxKfHbqDCE6dETQc0s
 
 1. **Antes da sessão** (5 minutos, faça em casa):
    - Acesse <https://aistudio.google.com/apikey> com sua conta Google (mesma do Gmail).
