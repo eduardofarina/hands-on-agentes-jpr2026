@@ -51,7 +51,7 @@ def main() -> None:
     cells = notebook["cells"]
     assert notebook["nbformat"] == 4
     assert notebook["nbformat_minor"] >= 5
-    assert len(cells) == 37
+    assert len(cells) == 38
     cell_ids = [cell.get("id") for cell in cells]
     assert all(cell_ids)
     assert len(set(cell_ids)) == len(cell_ids)
@@ -72,7 +72,7 @@ def main() -> None:
 
     required_pins = {
         "agno==2.9.0",
-        "google-genai==2.18.1",
+        "openai==3.1.0",
         "requests==2.32.5",
     }
     requirement_lines = {
@@ -84,6 +84,10 @@ def main() -> None:
     setup_source = select_code_cell(cells, "PACKAGES = [")
     for pin in required_pins:
         assert f'"{pin}"' in setup_source
+    assert 'OPENROUTER_API_KEY' in setup_source
+    assert 'https://openrouter.ai/api/v1' in setup_source
+    assert 'google/gemini-3.6-flash' in setup_source
+    assert 'GOOGLE_API_KEY' not in setup_source
 
     worklist_source = select_code_cell(cells, "DEMO_CASES = {")
     worklist = execute_selected_nodes(
@@ -112,14 +116,13 @@ def main() -> None:
     assert all(item["doi"] == "10.1148/ryai.240300" for item in retrieved)
 
     from agno.agent import Agent
-    from agno.models.google import Gemini
+    from agno.models.openrouter import OpenRouter
 
-    model = Gemini(
-        id="gemini-3.6-flash",
-        max_output_tokens=1400,
-        thinking_level="low",
+    model = OpenRouter(
+        id="google/gemini-3.6-flash",
+        max_tokens=1400,
         timeout=90,
-        retries=1,
+        max_retries=1,
     )
     agent = Agent(
         model=model,
@@ -127,13 +130,35 @@ def main() -> None:
         tool_call_limit=1,
     )
     assert agent.tool_call_limit == 1
-    assert model.id == "gemini-3.6-flash"
+    assert model.id == "google/gemini-3.6-flash"
+    assert model.max_tokens == 1400
+
+    image_source = select_code_cell(cells, 'PUBLIC_IMAGES = {')
+    assert 'thoracic_spine_xray.png' in image_source
+    assert 'SPINE_XRAY_PATH' in image_source
+    assert 'not_a_cxr' not in image_source
+
+    router_source = select_code_cell(cells, 'BIOMEDCLIP_ID =')
+    assert 'microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224' in router_source
+    assert 'a full-length standing spine radiograph' in router_source
+    assert 'scores are not calibrated probabilities' in router_source
+
+    gate_source = select_code_cell(cells, 'def gated_vision_response')
+    refusal_index = gate_source.index('if not route["accepted"]')
+    model_call_index = gate_source.index('return show_response(')
+    assert refusal_index < model_call_index
+    assert 'SPINE_XRAY_PATH' in gate_source
 
     markdown = "\n".join(cell_source(cell) for cell in cells if cell.get("cell_type") == "markdown")
+    all_source = "\n".join(cell_source(cell) for cell in cells)
+    assert 'not_a_cxr' not in all_source
+    assert 'Cat photograph' not in all_source
     for required_text in (
         "60-minute",
         "Trainee Editorial Board",
         "prepaid credits",
+        "OpenRouter",
+        "BiomedCLIP",
         "CLAIM 2024",
         "CARE-X",
     ):
