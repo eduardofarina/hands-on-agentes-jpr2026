@@ -1,7 +1,3 @@
-agno
-google-genai
-pypdf
-lancedb
-tantivy
-requests
-pillow
+agno==2.9.0
+google-genai==2.18.1
+requests==2.32.5

@@ -29,3 +29,10 @@ secrets.json
 # Local data that shouldn't be versioned
 data/cache/
 *.log
+
+# Workshop build and QA artifacts
+.build/
+.playwright-cli/
+*.inspect.ndjson
+output/
+tmp/
