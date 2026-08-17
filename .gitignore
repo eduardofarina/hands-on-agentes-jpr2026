@@ -36,3 +36,6 @@ data/cache/
 *.inspect.ndjson
 output/
 tmp/
+
+#Slides
+*.pptx
