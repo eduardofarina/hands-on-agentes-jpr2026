@@ -24,17 +24,17 @@ The central example is an editorial triage agent grounded in an educational synt
 - Participation: the audience chooses questions, review priorities, and attacks on the agent.
 - Contingency: the PubMed search is a bonus and can be skipped without affecting the rest.
 
-## OpenRouter and billing
+## Google AI Studio and billing
 
-The session uses one presenter-owned `OPENROUTER_API_KEY` with prepaid OpenRouter credits. The tested default is `google/gemini-3.6-flash`; `OPENROUTER_MODEL` can override it without editing the notebook.
+The session uses one presenter-owned `GOOGLE_API_KEY` linked to prepaid credits in Google AI Studio. The tested default is `gemini-3.6-flash`; `GEMINI_MODEL` can override it without editing the notebook.
 
-1. Add only the OpenRouter credits needed for the session.
-2. Create a dedicated API key with a USD spending limit.
-3. In Colab, save the key in **Secrets** as `OPENROUTER_API_KEY`.
+1. Create or select a project dedicated to the session.
+2. Confirm the balance, billing, and project spend cap.
+3. In Colab, save the key in **Secrets** as `GOOGLE_API_KEY`.
 4. Enable **Notebook access**.
 5. Never paste the key into a cell or share it with the audience.
 
-The notebook pins tested library versions and limits tokens and tool calls. Even so, monitor usage in the OpenRouter Activity and Credits pages.
+The notebook pins tested library versions and limits tokens and tool calls. Even so, monitor usage in Google AI Studio.
 
 ## Files
 
@@ -55,7 +55,7 @@ The session deck is maintained locally as `agentic_ai_radiology_teb.pptx` and is
 ## Stack
 
 - [Agno](https://docs.agno.com/) for agents and tool calling.
-- [OpenRouter](https://openrouter.ai/docs/quickstart) for OpenAI-compatible routing to Gemini 3.6 Flash.
+- [Google Gemini API](https://ai.google.dev/gemini-api/docs) via `google-genai`.
 - [BiomedCLIP](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224) for the educational zero-shot image gate.
 - Google Colab for execution.
 - NCBI E-utilities for the PubMed bonus.

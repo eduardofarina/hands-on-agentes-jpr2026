@@ -103,12 +103,12 @@ cells = [
 
         ### 5 minutes
 
-        This session uses **one presenter API key** with prepaid OpenRouter credits. The key must never appear in the notebook, chat, or projected screen.
+        This session uses **one presenter API key**, created in Google AI Studio and linked to prepaid credits. The key must never appear in the notebook, chat, or projected screen.
 
         Before you begin:
 
-        1. Add only the credits needed for the session and create a dedicated OpenRouter key with a USD spending limit.
-        2. In Colab, open **Secrets** (key icon), create `OPENROUTER_API_KEY`, and enable notebook access.
+        1. Confirm the balance and project spend cap in Google AI Studio.
+        2. In Colab, open **Secrets** (key icon), create `GOOGLE_API_KEY`, and enable notebook access.
         3. Do not share the key with the audience. This is a presenter-led hands-on.
         4. Close tabs or panels that could expose billing, the key, or sensitive logs.
 
@@ -121,10 +121,11 @@ cells = [
         import os
         import subprocess
         import sys
+        import warnings
 
         PACKAGES = [
             "agno==2.9.0",
-            "openai==3.1.0",
+            "google-genai==2.18.1",
             "requests==2.32.5",
         ]
 
@@ -138,57 +139,53 @@ cells = [
         try:
             from google.colab import userdata
 
-            colab_key = userdata.get("OPENROUTER_API_KEY")
+            colab_key = userdata.get("GOOGLE_API_KEY")
             if colab_key:
-                os.environ["OPENROUTER_API_KEY"] = colab_key
+                os.environ["GOOGLE_API_KEY"] = colab_key
         except ImportError:
             pass
 
-        if not os.environ.get("OPENROUTER_API_KEY"):
+        if not os.environ.get("GOOGLE_API_KEY"):
             raise RuntimeError(
-                "OPENROUTER_API_KEY was not found. In Colab: Secrets > OPENROUTER_API_KEY > "
+                "GOOGLE_API_KEY was not found. In Colab: Secrets > GOOGLE_API_KEY > "
                 "enable 'Notebook access'."
             )
 
-        from openai import OpenAI
-        from agno.models.openrouter import OpenRouter
+        # Avoid ambiguity if another Gemini key variable is defined locally.
+        os.environ.pop("GEMINI_API_KEY", None)
 
-        MODEL_ID = os.environ.get("OPENROUTER_MODEL", "google/gemini-3.6-flash")
-        OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-        OPENROUTER_HEADERS = {
-            "HTTP-Referer": "https://github.com/eduardofarina/hands-on-agentes-jpr2026",
-            "X-OpenRouter-Title": "Radiology AI TEB Hands-on",
-        }
-        client = OpenAI(
-            base_url=OPENROUTER_BASE_URL,
-            api_key=os.environ["OPENROUTER_API_KEY"],
-            default_headers=OPENROUTER_HEADERS,
+        # Suppress a technical SDK recommendation that would clutter the projected demo.
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Direct use of automatic function calling .*",
         )
 
+        from google import genai
+        from google.genai import types
+        from agno.models.google import Gemini
 
-        def make_model(max_output_tokens: int = 1400) -> OpenRouter:
+        MODEL_ID = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        DIRECT_CONFIG = types.GenerateContentConfig(max_output_tokens=160)
+        client = genai.Client(api_key=os.environ["GOOGLE_API_KEY"])
+
+
+        def make_model(max_output_tokens: int = 1400) -> Gemini:
             '''Create the same model for every demo, with explicit limits.'''
-            return OpenRouter(
+            return Gemini(
                 id=MODEL_ID,
-                max_tokens=max_output_tokens,
+                max_output_tokens=max_output_tokens,
+                thinking_level="low",
                 timeout=90,
-                max_retries=1,
-                default_headers=OPENROUTER_HEADERS,
-                extra_body={"reasoning": {"effort": "low"}},
+                retries=1,
             )
 
 
-        test = client.chat.completions.create(
-            model=MODEL_ID,
-            messages=[{"role": "user", "content": "Reply with only: READY"}],
-            max_tokens=16,
-            extra_body={"reasoning": {"effort": "low"}},
-        )
-        test_text = test.choices[0].message.content or ""
-        if "READY" not in test_text.upper():
-            raise RuntimeError(f"The API test returned an unexpected response: {test_text!r}")
+        test_chat = client.chats.create(model=MODEL_ID, config=DIRECT_CONFIG)
+        test = test_chat.send_message("Reply with only: READY")
+        if "READY" not in (test.text or "").upper():
+            raise RuntimeError(f"The API test returned an unexpected response: {test.text!r}")
 
-        print(f"✅ OpenRouter validated with {MODEL_ID}. The key was not displayed.")
+        print(f"✅ Gemini API validated with {MODEL_ID}. The key was not displayed.")
         """
     ),
     code(
@@ -637,7 +634,7 @@ cells = [
 
         ### Skip it without hesitation if time is short
 
-        This section depends on NCBI and OpenRouter availability. It is not required for the multimodal and guardrails sections.
+        This section depends on NCBI and Gemini availability. It is not required for the multimodal and guardrails sections.
 
         The agent can formulate a search and call the API, but the synthesis does not replace a reproducible search strategy. The tool returns at most three records, and the agent may cite only the PMIDs it receives.
         """
@@ -1027,10 +1024,9 @@ cells = [
 
         | Symptom | Try this first |
         |---|---|
-        | `OPENROUTER_API_KEY was not found` | Confirm the secret name and the **Notebook access** toggle |
-        | `402` insufficient credits | Add credits or use a key whose spending limit has not been reached |
-        | `429` or provider error | Wait a few seconds, check OpenRouter Activity, and do not launch several cells |
-        | model unavailable | Set `OPENROUTER_MODEL` to an available OpenRouter model and rerun 0A |
+        | `GOOGLE_API_KEY was not found` | Confirm the secret name and the **Notebook access** toggle |
+        | `429` or quota error | Wait a few seconds, check Google AI Studio billing, and do not launch several cells |
+        | model unavailable | Set `GEMINI_MODEL` to another stable model enabled in the project and rerun 0A |
         | tool does not appear | Run cells in order; confirm the function is defined before the `Agent` |
         | image does not open | Run the asset cell; the repository includes local fallback copies |
         | BiomedCLIP takes time | The first guardrail run downloads model weights; run that cell during setup if needed |
@@ -1044,7 +1040,7 @@ cells = [
         """
         # Appendix B · Cost and security hygiene
 
-        - Use a dedicated OpenRouter key with prepaid credits and a USD spending limit.
+        - Use a Google AI Studio project dedicated to the session, with prepaid credits and a spend cap.
         - Keep `tool_call_limit` low in demos.
         - Prefer short prompts and bounded outputs.
         - Do not run multiple API-calling cells at the same time.
@@ -1057,8 +1053,8 @@ cells = [
         """
         # Appendix C · Sources and licenses
 
-        - **OpenRouter:** OpenAI-compatible API and the tested [`google/gemini-3.6-flash`](https://openrouter.ai/google/gemini-3.6-flash) model route.
-        - **Agno:** `Agent`, `OpenRouter`, multimodal input, and `tool_call_limit` contracts from the [official documentation](https://docs.agno.com/models/providers/gateways/openrouter/overview).
+        - **Gemini API:** documentation and stable model reference from [Google AI for Developers](https://ai.google.dev/gemini-api/docs/models).
+        - **Agno:** `Agent`, `Gemini`, multimodal input, and `tool_call_limit` contracts from the [official documentation](https://docs.agno.com/).
         - **BiomedCLIP:** zero-shot classification pattern and model identifier from the [official Microsoft model card](https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224); see also [Zhang et al., 2023](https://arxiv.org/abs/2303.00915).
         - **CLAIM 2024:** Tejani AS et al. *Radiology: Artificial Intelligence*. 2024;6(4):e240300. [doi:10.1148/ryai.240300](https://doi.org/10.1148/ryai.240300). The notebook snippets are educational paraphrases, not the official checklist.
         - **Radiograph with Kerley B lines:** Wikimedia Commons, used for teaching. See the file page for authorship and license.

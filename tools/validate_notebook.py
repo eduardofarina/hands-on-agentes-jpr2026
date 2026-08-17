@@ -72,7 +72,7 @@ def main() -> None:
 
     required_pins = {
         "agno==2.9.0",
-        "openai==3.1.0",
+        "google-genai==2.18.1",
         "requests==2.32.5",
     }
     requirement_lines = {
@@ -84,10 +84,8 @@ def main() -> None:
     setup_source = select_code_cell(cells, "PACKAGES = [")
     for pin in required_pins:
         assert f'"{pin}"' in setup_source
-    assert 'OPENROUTER_API_KEY' in setup_source
-    assert 'https://openrouter.ai/api/v1' in setup_source
-    assert 'google/gemini-3.6-flash' in setup_source
-    assert 'GOOGLE_API_KEY' not in setup_source
+    assert 'GOOGLE_API_KEY' in setup_source
+    assert 'gemini-3.6-flash' in setup_source
 
     worklist_source = select_code_cell(cells, "DEMO_CASES = {")
     worklist = execute_selected_nodes(
@@ -116,13 +114,14 @@ def main() -> None:
     assert all(item["doi"] == "10.1148/ryai.240300" for item in retrieved)
 
     from agno.agent import Agent
-    from agno.models.openrouter import OpenRouter
+    from agno.models.google import Gemini
 
-    model = OpenRouter(
-        id="google/gemini-3.6-flash",
-        max_tokens=1400,
+    model = Gemini(
+        id="gemini-3.6-flash",
+        max_output_tokens=1400,
+        thinking_level="low",
         timeout=90,
-        max_retries=1,
+        retries=1,
     )
     agent = Agent(
         model=model,
@@ -130,8 +129,8 @@ def main() -> None:
         tool_call_limit=1,
     )
     assert agent.tool_call_limit == 1
-    assert model.id == "google/gemini-3.6-flash"
-    assert model.max_tokens == 1400
+    assert model.id == "gemini-3.6-flash"
+    assert model.max_output_tokens == 1400
 
     image_source = select_code_cell(cells, 'PUBLIC_IMAGES = {')
     assert 'thoracic_spine_xray.png' in image_source
@@ -157,7 +156,7 @@ def main() -> None:
         "60-minute",
         "Trainee Editorial Board",
         "prepaid credits",
-        "OpenRouter",
+        "Google AI Studio",
         "BiomedCLIP",
         "CLAIM 2024",
         "CARE-X",
